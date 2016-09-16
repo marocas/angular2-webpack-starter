@@ -1,14 +1,14 @@
-import { Component } from '@angular/core';
-import { NoteCard, NoteCreator } from '../ui';
-import { NoteService } from '../services';
+import {Component, OnDestroy} from '@angular/core';
+import {NoteCard, NoteCreator} from '../ui';
+import {NoteService} from '../services';
 
 @Component({
-  selector: 'notes-container',
-  directives: [
-    NoteCard,
-    NoteCreator
-  ],
-  styles: [`
+	selector: 'notes-container',
+	directives: [
+		NoteCard,
+		NoteCreator
+	],
+	styles: [`
     .notes {
       padding-top: 50px;
     }
@@ -16,7 +16,7 @@ import { NoteService } from '../services';
       margin-bottom: 40px;
     }
   `],
-  template: `
+	template: `
     <div class="row center-xs notes">
       <div class="col-xs-6 creator">
         <note-creator (createNote)="onCreateNote($event)"></note-creator>
@@ -35,25 +35,27 @@ import { NoteService } from '../services';
     </div>
   `
 })
-export class Notes {
-  notes = [];
+export class Notes implements OnDestroy {
+	notes = [];
+	ngOnDestroy() {
+		console.log('destroy');
+	}
+	constructor(private noteService: NoteService) {
+		this.noteService.getNotes()
+			.subscribe(res => this.notes = res.data);
+	}
 
-  constructor(private noteService: NoteService) {
-    this.noteService.getNotes()
-    .subscribe(res => this.notes = res.data);
-  }
+	onCreateNote(note) {
+		this.noteService.createNote(note)
+			.subscribe(note => this.notes.push(note));
+	}
 
-  onCreateNote(note) {
-    this.noteService.createNote(note)
-    .subscribe(note => this.notes.push(note));
-  }
+	onNoteChecked(note) {
+		this.noteService.completeNote(note)
+			.subscribe(note => {
+				const i = this.notes.findIndex(localNote => localNote.id === note.id);
+				this.notes.splice(i, 1);
+			});
 
-  onNoteChecked(note) {
-    this.noteService.completeNote(note)
-    .subscribe(note => {
-      const i = this.notes.findIndex(localNote => localNote.id === note.id);
-      this.notes.splice(i, 1);
-    });
-
-  }
+	}
 }
